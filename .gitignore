@@ -1,0 +1,5 @@
+networks/*
+!networks/SiouxFalls_net.txt
+!networks/Braess_net.txt
+!networks/SiouxFalls_net.pkl
+*.pyc
