@@ -1,6 +1,6 @@
 import unittest
 from igraph import *
-from graph_utils.pathfinding import *
+from pathfinding.pathfinding import *
 import numpy as np
 
 __author__ = 'jeromethai'

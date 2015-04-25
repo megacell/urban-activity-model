@@ -1,5 +1,5 @@
 import unittest
-from graph_utils.networks_to_igraph import *
+from graph_utils.txt_to_igraph import *
 
 __author__ = 'jeromethai'
 
@@ -27,7 +27,7 @@ edge_data_sioux = [[25900.20064, 6.0, 6.0, 0.15, 4, 0.0, 0.0, 1],
 edge_ids_sioux = [(1,2), (1,3), (2,1), (24,23)]
 
 
-class TestNetworksToIgraph(unittest.TestCase):
+class TestTxtToIgraph(unittest.TestCase):
 
 
     def test_txt_to_edge_dict_Braess(self):

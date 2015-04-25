@@ -2,7 +2,7 @@ import unittest
 from igraph import *
 import sys
 sys.path.append('../../')
-from graph_utils.pathfinding import *
+from pathfinding.pathfinding import *
 import numpy as np
 import time
 
