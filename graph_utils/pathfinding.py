@@ -14,10 +14,13 @@ def dijkstra(graph, v, to=None, weights=None, mode="OUT", output="vpath"):
     dist[v] = 0.0
     prev = [-1] * num_vs
     Q = {v: 0.0} # set of visited neighbors
+    if to is None: to = range(num_vs)
+    targets = dict.fromkeys(to,None) # set of target vertices
 
-    while len(Q) > 0:
+    while len(Q) > 0 and len(targets) > 0:
         u = min(Q, key=Q.get) # Get key with the least value from Q
         dist_u = Q.pop(u) # pop key and get value
+        if u in targets.keys(): targets.pop(u)
         for neighbor in graph.neighbors(u, mode="out"):
             if weights is None: 
                 weight = 1.0
@@ -44,11 +47,14 @@ def dijkstra_with_heap(graph, v, to=None, weights=None, mode="OUT", output="vpat
     Q = {v: 0.0} # set of visited neighbors
     h = []
     hq.heappush(h, (0.0, v))
+    if to is None: to = range(num_vs)
+    targets = dict.fromkeys(to,None) # set of target vertices
 
-    while len(Q) > 0:
-        #u = min(Q, key=Q.get) # Get key with the least value from Q
+
+    while len(Q) > 0 and len(targets) > 0:
         u = hq.heappop(h)[1]
         dist_u = Q.pop(u) # pop key and get value
+        if u in targets.keys(): targets.pop(u)
         for neighbor in graph.neighbors(u, mode="out"):
             if weights is None: 
                 weight = 1.0
@@ -75,7 +81,6 @@ def get_vpaths(prev, to=None):
     # if output == "vpath"
     # returns list of vertex IDs, one path for each target vertex
     # executed in dijkstra(ouput=="vpath")
-    if to is None: to = range(len(prev))
     vpaths = {} # constructed vpaths
     for u in to:
         if u in vpaths.keys() or prev[u] == -1: continue # found path or u unreachable
@@ -103,7 +108,6 @@ def get_epaths(graph, prev, to=None):
     # if output == "vpath" (resp. "epath")
     # returns list of vertex (resp. edge) IDs, one path for each target vertex
     # executed in dijkstra(ouput=="vpath") (resp. dijkstra(ouput=="epath"))
-    if to is None: to = range(len(prev))
     epaths = {} # constructed paths
     for u in to:
         if u in epaths.keys() or prev[u] == -1: continue # found path or u unreachable
