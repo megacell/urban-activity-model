@@ -5,4 +5,5 @@ networks/*
 !networks/SiouxFalls_net.pkl
 !networks/SmallGrid_activities.txt
 !networks/SmallGrid_net_times.txt
+!networks/SmallGrid.pkl
 *.pyc

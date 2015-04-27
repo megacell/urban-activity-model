@@ -52,7 +52,7 @@ class TestTxtToSupernetwork(unittest.TestCase):
         # see test_txt_to_superedge_dict(self) for details on the supernetwork
         # the home is at node 0
         # the mall is at node 2
-        # the work is at mode 5
+        # the work is at node 5
         num_nodes = 6
         num_steps = 16
         filepath = 'networks/SmallGrid_activities.txt'
@@ -71,8 +71,8 @@ class TestTxtToSupernetwork(unittest.TestCase):
             self.assertTrue(edge_dict[edge]['weight'] == 0.)
             self.assertTrue(edge_dict[edge]['type'] == -1)
         # check the mall activity edges
-        for i in range(10):
-            edge = (2 + (i+3)*num_nodes, 2 + (i+6)*num_nodes)
+        for i in range(11):
+            edge = (2 + (i+2)*num_nodes, 2 + (i+5)*num_nodes)
             self.assertTrue(edge_dict[edge]['weight'] == -200.)
             self.assertTrue(edge_dict[edge]['type'] == 0)
 
@@ -140,8 +140,8 @@ class TestTxtToSupernetwork(unittest.TestCase):
             self.assertTrue(edge['type'] == -1)
         # check the mall activity edges
         self.assertTrue(-200. + 3*shift > 0.)
-        for i in range(10):
-            edge = g.es[g.get_eid(2+(i+3)*num_nodes, 2+(i+6)*num_nodes)]
+        for i in range(11):
+            edge = g.es[g.get_eid(2+(i+2)*num_nodes, 2+(i+5)*num_nodes)]
             self.assertTrue(edge['weight'] == -200. + 3*shift)
             self.assertTrue(edge['type'] == 0)
 
