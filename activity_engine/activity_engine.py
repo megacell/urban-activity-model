@@ -8,6 +8,7 @@ from pathfinding.pathfinding_extended import dijkstra_extended
 from graph_utils.txt_to_supernetwork import txt_to_supernetwork, read_metadata
 import itertools
 import numpy as np
+import time
 
 __author__ = "jeromethai"
 
@@ -27,7 +28,8 @@ def activity_engine(filepath_net, filepath_act, name="SuperNetwork", alpha=1.0):
     # it modifies the weight of activity edge of type i to infinity if a[i]=1
     # if a[i]=0, it sets a[i] to 1
     def modifier(edge=None, a=None):
-        # a modifier that takes an edge and an activity in argument
+        # a modifier that takes an edge and an activity counter in argument
+        # activity counter a is s.t. a[i] = #times activity of type i has been done
         if edge is None and a is None:  
             return num_types # number of types
         w = edge['weight']
@@ -45,12 +47,18 @@ def activity_engine(filepath_net, filepath_act, name="SuperNetwork", alpha=1.0):
     # solves using a generalization of dijkstra algorithm
     raw = dijkstra_extended(g, home, targets, modifier)
 
-    # translates back into activity
-    # format {a: [(start, end, nodes visited)]}
-    return raw_to_activity(raw, metadata)
+    # translates back into trajectories on a time slice basis
+    # format {activity: [(start, end, nodes visited)]}
+    activities = raw_to_activity(raw, metadata)
+    # get the costs {activity: costs}
+    costs = raw_to_cost(raw, g, metadata)
+    return activities, costs
 
 
 def raw_to_activity(raw, metadata):
+    # translates raw trajectory on the supernetwork 
+    # into trajectories on a time slice basis 
+    # format {activity: [(start, end, nodes visited)]}
     start_time = metadata['start_time']
     # end_time = metadata['end_time']
     # num_steps = metadata['num_steps']
@@ -59,7 +67,9 @@ def raw_to_activity(raw, metadata):
     combinations = list(itertools.product([0, 1], repeat=num_types))
     out = {}
     for traj, a in zip(raw, combinations):
-        if len(traj) == 0: continue
+        if len(traj) == 0: 
+            out[a] = []
+            continue
         # start_time + v/num_nodes is the time slice associated to v
         # v%num_nodes is the location of vertex v
         pairs = [(start_time + v/num_nodes, v%num_nodes) for v in traj]
@@ -71,14 +81,30 @@ def raw_to_activity(raw, metadata):
     return out
 
 
+def raw_to_cost(raw, graph, metadata):
+    # get the costs of each raw trajectory {activity: costs}
+    num_types = metadata['num_types']
+    combinations = list(itertools.product([0, 1], repeat=num_types))
+    out = {}
+    for traj, a in zip(raw, combinations):
+        if len(traj) == 0:
+            out[a] = np.inf
+            continue
+        cost = 0.0
+        for s,t in zip(traj[:-1],traj[1:]):
+            cost += graph.es[graph.get_eid(s, t)]['raw_weight']
+        out[a] = cost
+    return out
+
+
 def main():
     print "solves activity engine for a small grid network"
     filepath_net = 'networks/SmallGrid_net_times.txt'
     filepath_act = 'networks/SmallGrid_activities.txt'
-    out = activity_engine(filepath_net, filepath_act)
+    trajs, costs = activity_engine(filepath_net, filepath_act)
     print "optimal activity paths"
-    print out[(0,)]
-    print out[(1,)]
+    print trajs[(0,)], costs[(0,)]
+    print trajs[(1,)], costs[(1,)]
 
 
 if __name__ == '__main__':

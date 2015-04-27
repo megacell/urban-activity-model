@@ -13,15 +13,17 @@ class TestActivityEngine(unittest.TestCase):
     def test_activity_engine(self):
         filepath_net = 'networks/SmallGrid_net_times.txt'
         filepath_act = 'networks/SmallGrid_activities.txt'
-        out = activity_engine(filepath_net, filepath_act)
-        for i, (start, end, traj) in enumerate(out[(0,)]):
+        activities, costs = activity_engine(filepath_net, filepath_act)
+        for i, (start, end, traj) in enumerate(activities[(0,)]):
             self.assertTrue(start == optimal_0[i][0])
             self.assertTrue(end == optimal_0[i][1])
             self.assertTrue(traj == optimal_0[i][2])
-        for i, (start, end, traj) in enumerate(out[(1,)]):
+        for i, (start, end, traj) in enumerate(activities[(1,)]):
             self.assertTrue(start == optimal_1[i][0])
             self.assertTrue(end == optimal_1[i][1])
             self.assertTrue(traj == optimal_1[i][2])
+        self.assertTrue(costs[(0,)] == -395.0)
+        self.assertTrue(costs[(1,)] == -554.0)
 
 if __name__ == '__main__':
     unittest.main()
