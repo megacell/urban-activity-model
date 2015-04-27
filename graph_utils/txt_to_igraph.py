@@ -30,7 +30,8 @@ def txt_to_edge_dict(filepath):
                     'power': int(line[6]),
                     'speed_limit': float(line[7]),
                     'toll': float(line[8]),
-                    'type': int(line[9][0])
+                    'type': int(line[9][0]),
+                    'weight': float(line[4])
                     }
             else:
                 if line[0] == '~': header_passed = True
@@ -38,13 +39,14 @@ def txt_to_edge_dict(filepath):
 
 
 def edge_dict_to_igraph(edge_dict, name):
+    # construct an igraph from edge_dict
+    # edge_dict is a dictionary of dictionaries of the format
+    # edge_dict[(s,t)] = {edge_attrs: values}
     g = Graph(edges=edge_dict.keys(), directed=True)
     g["name"] = name
-    edge_attrs = ['capacity', 'length', 'fftt', 'B', 'power', 'speed_limit', 
-        'toll', 'type']
+    edge_attrs = edge_dict.values()[0].keys()
     for attr in edge_attrs:
         g.es[attr] = [x[attr] for x in edge_dict.values()]
-    g.es['weight'] = [x['fftt'] for x in edge_dict.values()]
     return g
 
 

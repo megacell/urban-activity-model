@@ -5,7 +5,7 @@ __author__ = 'jeromethai'
 
 
 edge_attrs = ['capacity', 'length', 'fftt', 'B', 'power', 'speed_limit', 'toll', 
-                'type']
+                'type', 'weight']
 
 # edge attributes of the Braess network
 edge_data_braess = [[1.0, 100.0, 0.00000001, 1000000000.0, 1, 0.0, 0.0, 1],
@@ -51,15 +51,15 @@ class TestTxtToIgraph(unittest.TestCase):
     def test_edge_dict_to_igraph_Braess(self):
         edge_dict = {(4, 2): {'length': 100.0, 'B': 1000000000.0, 
             'capacity': 1.0, 'power': 1, 'toll': 0.0, 'fftt': 1e-08, 'type': 1, 
-            'speed_limit': 0.0}, (3, 2): {'length': 100.0, 'B': 0.02, 
+            'speed_limit': 0.0, 'weight': 1e-08}, (3, 2): {'length': 100.0, 'B': 0.02, 
             'capacity': 1.0, 'power': 1, 'toll': 0.0, 'fftt': 50.0, 'type': 1, 
-            'speed_limit': 0.0}, (1, 3): {'length': 100.0, 'B': 1000000000.0, 
+            'speed_limit': 0.0, 'weight': 50.0}, (1, 3): {'length': 100.0, 'B': 1000000000.0, 
             'capacity': 1.0, 'power': 1, 'toll': 0.0, 'fftt': 1e-08, 'type': 1, 
-            'speed_limit': 0.0}, (3, 4): {'length': 100.0, 'B': 0.1, 
+            'speed_limit': 0.0, 'weight': 1e-08}, (3, 4): {'length': 100.0, 'B': 0.1, 
             'capacity': 1.0, 'power': 1, 'toll': 0.0, 'fftt': 10.0, 'type': 1, 
-            'speed_limit': 0.0}, (1, 4): {'length': 100.0, 'B': 0.02, 
+            'speed_limit': 0.0, 'weight': 10.0}, (1, 4): {'length': 100.0, 'B': 0.02, 
             'capacity': 1.0, 'power': 1, 'toll': 0.0, 'fftt': 50.0, 'type': 1, 
-            'speed_limit': 0.0}}
+            'speed_limit': 0.0, 'weight': 50.0}}
         g = edge_dict_to_igraph(edge_dict, 'Braess')
         for edge in g.es:
             ind = edge_ids_braess.index(edge.tuple)
