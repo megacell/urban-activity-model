@@ -21,9 +21,11 @@ The activity model is described by two files, for example:
 	networks/SmallGrid_net_times.txt
 
 SmallGrid_net_times.txt describes a directed network of geometry
-(0)--(1)--(2)
- |    |    |
-(3)--(4)--(5)
+
+	(0)--(1)--(2)
+	 |    |    |
+	(3)--(4)--(5)
+
 multilpied by 16 time steps of one hour between 5am and 9pm
 the weights are the travel times for each of the 16 time slices
 which are (5am,6am], (6am,7am] and so on ...
@@ -53,20 +55,25 @@ and solves using an extension of Dijkstra's algorithm
 Example of a Supernetwork
 -----
 networks/SmallGrid_net_times.txt describes a network of geometry
-(0)--(1)--(2)
- |    |    |
-(3)--(4)--(5)
+
+	(0)--(1)--(2)
+	 |    |    |
+	(3)--(4)--(5)
+
 multilpied by 16 time steps of one hour between 5am and 9pm
 slice 0 has weights equal to the travel times during (5am, 6am]:
-(0)--(1)--(2)
- |    |    |
-(3)--(4)--(5)
+
+	(0)--(1)--(2)
+	 |    |    |
+	(3)--(4)--(5)
+
 slice 1 has weights equal to the travel times during (6am, 7am]:
-(6)--(7)---(8)
- |    |     |
-(9)--(10)--(11)
-and so on ...
-the slices are linked by activity edges in the time dimension
+
+	(6)--(7)---(8)
+	 |    |     |
+	(9)--(10)--(11)
+
+and so on ..., the slices are linked by activity edges in the time dimension
 
 networks/SmallGrid_activities.txt describes the activities
 staying at home is following path 0-6-12-...
