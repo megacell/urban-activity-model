@@ -15,7 +15,7 @@ __author__ = "jeromethai"
 def activity_engine(filepath_net, filepath_act, name="SuperNetwork", alpha=1.0):
     # alpha is a coefficient to translate travel times to travel costs
     # construct super network
-    g = txt_to_supernetwork(filepath_net, filepath_act, name)
+    g = txt_to_supernetwork(filepath_net, filepath_act, name, alpha)
     # read metadata
     metadata = read_metadata(filepath_act)
     num_types = metadata['num_types']
@@ -46,10 +46,7 @@ def activity_engine(filepath_net, filepath_act, name="SuperNetwork", alpha=1.0):
     raw = dijkstra_extended(g, home, targets, modifier)
 
     # translates back into activity
-    # format {a: [[period, itinerary, cost]}
-    # period = [start_time, end_time]
-    # itinerary = [nodes visited]
-    # if only 1 node visited, user does activity at this node
+    # format {a: [(start, end, nodes visited)]}
     return raw_to_activity(raw, metadata)
 
 
@@ -63,7 +60,9 @@ def raw_to_activity(raw, metadata):
     out = {}
     for traj, a in zip(raw, combinations):
         if len(traj) == 0: continue
-        pairs = [(start_time + i/num_nodes, i%num_nodes) for i in traj]
+        # start_time + v/num_nodes is the time slice associated to v
+        # v%num_nodes is the location of vertex v
+        pairs = [(start_time + v/num_nodes, v%num_nodes) for v in traj]
         # group by times
         starts = sorted(set(map(lambda x:x[0], pairs)))
         ends = [t+1 for t in starts]

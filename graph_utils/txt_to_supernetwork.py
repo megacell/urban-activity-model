@@ -49,17 +49,17 @@ def txt_to_supernetwork(filepath_net, filepath_act, name="SuperNetwork",
     return edge_dict_to_igraph(edge_dict, name)
 
 
-def txt_to_superedge_dict(filepath, alpha=1.0):
+def txt_to_superedge_dict(filepath_net, alpha=1.0):
     # Contruct super edge data from *_net_times.txt files
     # alpha is a coefficient to translate travel times to travel costs
     # see networks/SmallGrid_net_times.txt for example
-    metadata = read_metadata(filepath)
+    metadata = read_metadata(filepath_net)
     num_nodes = metadata['num_nodes']
     num_steps = metadata['num_steps']
 
     header_passed = False
     edge_dict = {}
-    with open(filepath) as f:
+    with open(filepath_net) as f:
         for line in f.readlines():
             if header_passed == True:
                 line = line.split()
@@ -69,30 +69,52 @@ def txt_to_superedge_dict(filepath, alpha=1.0):
                 t = int(line[1])
                 for i in range(num_steps):
                     edge_dict[(s+i*num_nodes, t+i*num_nodes)] = {'weight': alpha*float(line[i+2]),
-                                                                'type': -1}
+                                                                'type': -1,
+                                                                'raw_weight': float(line[i+2])}
             else:
                 if line[0] == '~': header_passed = True
     return edge_dict
 
 
-def txt_to_activities_edge_dict(filepath, shifting=True):
+def txt_to_activities_edge_dict(filepath_act, shifting=True):
     # Add activity edges to edge_dict generated from txt_to_superedge_dict()
     # filepath contains list of activities from *_activities.txt
     # see networks/SmallGrid_activities.txt for example
     # activity weights are < 0 because equal to minus reward
     # if shifting is True, the activity weights are shifted by 
     # (end-start+1)*shift to make activity edges positive
-    metadata = read_metadata(filepath)
+    metadata = read_metadata(filepath_act)
     num_nodes = metadata['num_nodes']
-    start_time = metadata['start_time']
     home = metadata['home_location']
     num_steps = metadata['num_steps']
 
-    header_passed = False
     edge_dict = {}
-    tmp = []
+    lines, shift = read_activity_lines_and_return_shift(filepath_act)
+    if shifting is False: shift = 0.0
+    # add normal activity edges
+    for edge, type_edge, reward, duration in lines:
+        edge_dict[edge] = {'weight': -reward + duration*shift, 'type': type_edge, 
+                            'raw_weight': -reward}
+    # add home activity edges
+    for i in range(num_steps-1):
+        edge = (home+i*num_nodes, home+(i+1)*num_nodes)
+        edge_dict[edge] = {'weight': shift, 'type': -1, 'raw_weight': 0.0}
+    return edge_dict
+
+
+def read_activity_lines_and_return_shift(filepath_act):
+    # filepath contains list of activities from *_activities.txt
+    # return list of lines splitted into elements
+    # and the shift to be applied to have positive weights
+    metadata = read_metadata(filepath_act)
+    start_time = metadata['start_time']
+    num_steps = metadata['num_steps']
+    num_nodes = metadata['num_nodes']
+
+    header_passed = False
+    lines = []
     shift = 0.0
-    with open(filepath) as f:
+    with open(filepath_act) as f:
         for line in f.readlines():
             if header_passed == True:
                 line = line.split()
@@ -107,18 +129,12 @@ def txt_to_activities_edge_dict(filepath, shifting=True):
                 # note that we take start-1 since being on vertex v slice t
                 # means only starting the activity at v at slice t+1
                 duration = 1+end-start
-                if shifting and shift < reward/duration: 
-                    shift = np.ceil(reward/duration)
+                if shift < reward/duration: shift = np.ceil(reward/duration)
                 edge = (node + (start-1)*num_nodes, node + end*num_nodes)
-                tmp.append([edge, type_edge, reward, duration])
+                lines.append([edge, type_edge, reward, duration])
             else:
                 if line[0] == '~': header_passed = True
-        for edge, type_edge, reward, duration in tmp:
-            edge_dict[edge] = {'weight': -reward + duration*shift, 'type': type_edge}
-        for i in range(num_steps-1):
-            edge = (home+i*num_nodes, home+(i+1)*num_nodes)
-            edge_dict[edge] = {'weight': shift, 'type': -1}
-    return edge_dict
+    return lines, shift
 
 
 def read_metadata(filepath):

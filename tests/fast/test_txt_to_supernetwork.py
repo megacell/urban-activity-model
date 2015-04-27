@@ -46,9 +46,10 @@ class TestTxtToSupernetwork(unittest.TestCase):
                 self.assertTrue(edge_dict[edge]['type'] == -1)
 
 
-    def test_add_activities_to_superedge_dict(self):
+    def test_add_activities_to_superedge_dict_without_shift(self):
         # test that edge data for the super network composed of activity edges
         # is constructed correctly by txt_to_activities_edge_dict
+        # note that shifting = False
         # see test_txt_to_superedge_dict(self) for details on the supernetwork
         # the home is at node 0
         # the mall is at node 2
@@ -63,17 +64,21 @@ class TestTxtToSupernetwork(unittest.TestCase):
         for start in [1, 2, 3]:
             for delta, reward in zip([9, 10, 11, 12], [320., 360., 400., 440.]):
                 edge = (5 + start*num_nodes, 5 + (start+delta)*num_nodes)
+                # we recall that for this test, shifting = False
                 self.assertTrue(edge_dict[edge]['weight'] == -reward)
+                self.assertTrue(edge_dict[edge]['raw_weight'] == -reward)
                 self.assertTrue(edge_dict[edge]['type'] == -1)
         # check the home activity edges
         for i in range(num_steps-1):
             edge = (i*num_nodes, (i+1)*num_nodes)
             self.assertTrue(edge_dict[edge]['weight'] == 0.)
+            self.assertTrue(edge_dict[edge]['raw_weight'] == 0.)
             self.assertTrue(edge_dict[edge]['type'] == -1)
         # check the mall activity edges
         for i in range(11):
             edge = (2 + (i+2)*num_nodes, 2 + (i+5)*num_nodes)
             self.assertTrue(edge_dict[edge]['weight'] == -200.)
+            self.assertTrue(edge_dict[edge]['raw_weight'] == -200.)
             self.assertTrue(edge_dict[edge]['type'] == 0)
 
 
@@ -98,17 +103,20 @@ class TestTxtToSupernetwork(unittest.TestCase):
                 shifted_reward = -reward + delta*shift
                 self.assertTrue(shifted_reward > 0)
                 self.assertTrue(edge_dict[edge]['weight'] == shifted_reward)
+                self.assertTrue(edge_dict[edge]['raw_weight'] == -reward)
                 self.assertTrue(edge_dict[edge]['type'] == -1)
         # check the home activity edges
         for i in range(num_steps-1):
             edge = (i*num_nodes, (i+1)*num_nodes)
             self.assertTrue(edge_dict[edge]['weight'] == shift)
+            self.assertTrue(edge_dict[edge]['raw_weight'] == 0.)
             self.assertTrue(edge_dict[edge]['type'] == -1)
         # check the mall activity edges
         self.assertTrue(-200. + 3*shift > 0.)
         for i in range(10):
             edge = (2 + (i+3)*num_nodes, 2 + (i+6)*num_nodes)
             self.assertTrue(edge_dict[edge]['weight'] == -200. + 3*shift)
+            self.assertTrue(edge_dict[edge]['raw_weight'] == -200.)
             self.assertTrue(edge_dict[edge]['type'] == 0)
 
 
