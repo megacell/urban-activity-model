@@ -78,13 +78,12 @@ and so on ..., the slices are linked by activity edges in the time dimension
 networks/SmallGrid_activities.txt describes the activities
 staying at home is following path 0-6-12-...
 staying at mall located at Node 2 between 8am amd 10am means taking edge
-from vertex: Node + (start-1) * num_nodes = 2 + 2*6 = 14 
-to vertex: Node + end * num_nodes = 2 + 5*6 = 32 
-start-1=2 because activity starts sometime in the time slice 2 (7am,8am]
-end=5 because activity ends at 10am and driver is on the road at slice 5 (10am,11am]
-edge of type -1 means that user can take edge any number of times
-edge of type 0, 1, ... means user can only take it once
-the modifier tracks activities of types 0, 1, ... which adds up to the complexity
-if an activity can only be done once but has start times < end times
-its type can be set up to -1 because the geometry of the resulting supernetwork
-implicitly restricts the edge to be taken at most once 
+from vertex: Node + (start-1) * num_nodes = 2 + 2 * 6 = 14 
+to vertex: Node + end * num_nodes = 2 + 5 * 6 = 32 where 
+start-1=2 means activity starts sometime in time slice 2 (7am,8am]
+end=5 means activity ends at 10am and driver is on the road at slice 5 (10am,11am]. 
+An edge is of type -1 means that user can take edge any number of times while an edge is of type 0, 1, ... means user can only take it once. 
+The modifier tracks activities of types 0, 1, ... which adds up to the complexity. 
+Ff an activity can only be done once but has start times < end times, 
+its type can be set up to -1 because the geometry of the resulting supernetwork 
+implicitly restricts the edge to be taken at most once.
