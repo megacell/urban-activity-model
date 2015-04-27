@@ -53,6 +53,10 @@ def txt_to_superedge_dict(filepath, alpha=1.0):
     # Contruct super edge data from *_net_times.txt files
     # alpha is a coefficient to translate travel times to travel costs
     # see networks/SmallGrid_net_times.txt for example
+    metadata = read_metadata(filepath)
+    num_nodes = metadata['num_nodes']
+    num_steps = metadata['num_steps']
+
     header_passed = False
     edge_dict = {}
     with open(filepath) as f:
@@ -68,8 +72,6 @@ def txt_to_superedge_dict(filepath, alpha=1.0):
                                                                 'type': -1}
             else:
                 if line[0] == '~': header_passed = True
-                if line[:17] == '<NUMBER OF NODES>': num_nodes = int(line[17:])
-                if line[:17] == '<NUMBER OF STEPS>': num_steps = int(line[17:])
     return edge_dict
 
 
@@ -80,7 +82,7 @@ def txt_to_activities_edge_dict(filepath, shifting=True):
     # activity weights are < 0 because equal to minus reward
     # if shifting is True, the activity weights are shifted by 
     # (end-start+1)*shift to make activity edges positive
-    metadata, lines = read_metadata(filepath)
+    metadata = read_metadata(filepath)
     num_nodes = metadata['num_nodes']
     start_time = metadata['start_time']
     home = metadata['home_location']
@@ -120,13 +122,12 @@ def txt_to_activities_edge_dict(filepath, shifting=True):
 
 
 def read_metadata(filepath):
-    # read metadata in .txt files and pass the header
+    # read metadata in .txt files
     # entries is a list of entries, 
     # e.g. ['num_nodes', 'start_time', 'home_location', 'num_steps']
     metadata = {}
     with open(filepath) as f:
-        lines = f.readlines()
-        for i, line in enumerate(lines):
+        for line in f.readlines():
             if line[0] == '~': break
             if line[:17] == '<NUMBER OF NODES>': 
                 metadata['num_nodes'] = int(line[17:])
@@ -136,5 +137,9 @@ def read_metadata(filepath):
                 metadata['home_location'] = int(line[15:])
             if line[:17] == '<NUMBER OF STEPS>': 
                 metadata['num_steps'] = int(line[17:])
-    return metadata, lines[i+1]
+            if line[:17] == '<NUMBER OF TYPES>':
+                metadata['num_types'] = int(line[17:])
+            if line[:10] == '<END TIME>':
+                metadata['end_time'] = int(line[10:])
+    return metadata
 

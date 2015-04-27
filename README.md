@@ -11,3 +11,9 @@ Test igraph installation in your interpreter by typing:
 
 	import igraph.test
 	igraph.test.run_tests()
+
+Activity engine
+-----
+Run activity engine on a small grid network:
+
+	python activity_engine/activity_engine.py

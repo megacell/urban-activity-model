@@ -4,19 +4,28 @@
 # file networks/SmallGrid_activities.txt describes the activities
 # see module txt_to_supernetwork.py for mode details
 
-from graph_utils.txt_to_supernetwork import txt_to_supernetwork
-
+from pathfinding.pathfinding_extended import dijkstra_extended
+from graph_utils.txt_to_supernetwork import txt_to_supernetwork, read_metadata
+import itertools
+import numpy as np
 
 __author__ = "jeromethai"
 
 
 def activity_engine(filepath_net, filepath_act, name="SuperNetwork", alpha=1.0):
     # alpha is a coefficient to translate travel times to travel costs
+    # construct super network
     g = txt_to_supernetwork(filepath_net, filepath_act, name)
-    num_types = 
-    num_nodes =
-    num_steps =
+    # read metadata
+    metadata = read_metadata(filepath_act)
+    num_types = metadata['num_types']
+    num_nodes = metadata['num_nodes']
+    num_steps = metadata['num_steps']
+    home = metadata['home_location']
 
+    # construct modifier using metadata information
+    # it modifies the weight of activity edge of type i to infinity if a[i]=1
+    # if a[i]=0, it sets a[i] to 1
     def modifier(edge=None, a=None):
         # a modifier that takes an edge and an activity in argument
         if edge is None and a is None:  
@@ -28,4 +37,50 @@ def activity_engine(filepath_net, filepath_act, name="SuperNetwork", alpha=1.0):
         if i >= 0 and a[i] == 0: return w, (u, a[:i]+(1,)+a[i+1:])
         if i >= 0 and a[i] == 1: return np.inf, -1
 
-    to = None
+    # initialize the targets (to, a) with 'a' all the possible activity vectors
+    to = home + (num_steps-1)*num_nodes
+    combinations = list(itertools.product([0, 1], repeat=num_types))
+    targets = [(to,a) for a in combinations]
+
+    # solves using a generalization of dijkstra algorithm
+    raw = dijkstra_extended(g, home, targets, modifier)
+
+    # translates back into activity
+    # format {a: [[period, itinerary, cost]}
+    # period = [start_time, end_time]
+    # itinerary = [nodes visited]
+    # if only 1 node visited, user does activity at this node
+    return raw_to_activity(raw, metadata)
+
+
+def raw_to_activity(raw, metadata):
+    start_time = metadata['start_time']
+    # end_time = metadata['end_time']
+    # num_steps = metadata['num_steps']
+    num_nodes = metadata['num_nodes']
+    num_types = metadata['num_types']
+    combinations = list(itertools.product([0, 1], repeat=num_types))
+    out = {}
+    for traj, a in zip(raw, combinations):
+        if len(traj) == 0: continue
+        pairs = [(start_time + i/num_nodes, i%num_nodes) for i in traj]
+        # group by times
+        starts = sorted(set(map(lambda x:x[0], pairs)))
+        ends = [t+1 for t in starts]
+        tmp = zip(starts, ends, [[y[1] for y in pairs if y[0]==x] for x in starts])
+        out[a] = [e for e in tmp if len(e[2])>1]
+    return out
+
+
+def main():
+    print "solves activity engine for a small grid network"
+    filepath_net = 'networks/SmallGrid_net_times.txt'
+    filepath_act = 'networks/SmallGrid_activities.txt'
+    out = activity_engine(filepath_net, filepath_act)
+    print "optimal activity paths"
+    print out[(0,)]
+    print out[(1,)]
+
+
+if __name__ == '__main__':
+    main()
