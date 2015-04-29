@@ -53,6 +53,8 @@ def txt_to_superedge_dict(filepath_net, alpha=1.0):
     # Contruct super edge data from *_net_times.txt files
     # alpha is a coefficient to translate travel times to travel costs
     # see networks/SmallGrid_net_times.txt for example
+    # the format is edge_dict =
+    # {(start_node, end_node): {'weight': x, 'type': y, 'raw_weight': z}}
     metadata = read_metadata(filepath_net)
     num_nodes = metadata['num_nodes']
     num_steps = metadata['num_steps']

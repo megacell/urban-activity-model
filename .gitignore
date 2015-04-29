@@ -1,4 +1,6 @@
 networks/*
+notes.txt
+!networks/SmallGrid_net_times_32_steps.txt
 !networks/ChicagoSketch_net.pkl
 !networks/SiouxFalls_net.txt
 !networks/Braess_net.txt

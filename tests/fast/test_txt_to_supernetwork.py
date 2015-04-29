@@ -1,14 +1,17 @@
 import unittest
 from graph_utils.txt_to_supernetwork import *
+import numpy as np
 
 __author__ = 'jeromethai'
 
 
+# edges in the base network
 edges = [(0,1),(1,0),(1,2),(2,1),(0,3),(3,0),
         (1,4),(4,1),(2,5),(5,2),(3,4),(4,3),
         (4,5),(5,4)]
 
-
+# travel times in the super network with 16 time slices
+# this is contained in networks/SmallGrid_net_times.txt
 weights = [[5, 10, 15, 15, 15, 10, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5],
             [5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 10, 15, 15, 15, 10, 5],
             [5, 10, 15, 15, 15, 10, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5],
@@ -35,7 +38,7 @@ class TestTxtToSupernetwork(unittest.TestCase):
         #  |    |    |
         # (3)--(4)--(5)
         # multilpied by 16 time steps of one hour between 5am and 9pm
-        # each slice represents travel times during [5am, 6am], [6am, 7am] ...
+        # each slice represents travel times during (5am, 6am], (6am, 7am] ...
         edge_dict = txt_to_superedge_dict('networks/SmallGrid_net_times.txt')
         num_steps = 16
         num_nodes = 6
@@ -43,6 +46,36 @@ class TestTxtToSupernetwork(unittest.TestCase):
             for i in range(num_steps):
                 edge = (s+i*num_nodes, t+i*num_nodes)
                 self.assertTrue(edge_dict[edge]['weight'] == weights[j][i])
+                self.assertTrue(edge_dict[edge]['raw_weight'] == weights[j][i])
+                self.assertTrue(edge_dict[edge]['type'] == -1)
+
+
+    def test_txt_to_superedge_dict_2(self):
+        # test that edge data for the super network composed of road edges
+        # is constructed correctly by txt_to_superedge_dict())
+        # supernetwork has following geometry: 
+        # (0)--(1)--(2)
+        #  |    |    |
+        # (3)--(4)--(5)
+        # note that it is multiplied by 32 time steps for 30min between
+        # 5am and 9pm, each slice representing travel times during 
+        # (5am, 5:30am], (5:30am, 6pm] ...
+        edge_dict = txt_to_superedge_dict('networks/SmallGrid_net_times_32_steps.txt')
+        num_steps = 32
+        num_nodes = 6
+        for j,(s,t) in enumerate(edges):
+            for i in range(num_steps/2):
+                edge = (s+2*i*num_nodes, t+2*i*num_nodes)
+                self.assertTrue(edge_dict[edge]['weight'] == weights[j][i])
+                self.assertTrue(edge_dict[edge]['raw_weight'] == weights[j][i])
+                self.assertTrue(edge_dict[edge]['type'] == -1)
+                edge = (s+(2*i+1)*num_nodes, t+(2*i+1)*num_nodes)
+                if i < 15:
+                    weight = np.floor((weights[j][i] + weights[j][i+1]) / 2)
+                else:
+                    weight = 5.
+                self.assertTrue(edge_dict[edge]['weight'] == weight)
+                self.assertTrue(edge_dict[edge]['raw_weight'] == weight)
                 self.assertTrue(edge_dict[edge]['type'] == -1)
 
 
