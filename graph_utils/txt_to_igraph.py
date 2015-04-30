@@ -38,15 +38,18 @@ def txt_to_edge_dict(filepath):
     return edge_dict
 
 
-def edge_dict_to_igraph(edge_dict, name):
+def edge_dict_to_igraph(edge_dict, name, graph_info=None):
     # construct an igraph from edge_dict
     # edge_dict is a dictionary of dictionaries of the format
     # edge_dict[(s,t)] = {edge_attrs: values}
+    # graph_info is a dictionary that contains additional info on the graph
     g = Graph(edges=edge_dict.keys(), directed=True)
     g["name"] = name
     edge_attrs = edge_dict.values()[0].keys()
     for attr in edge_attrs:
         g.es[attr] = [x[attr] for x in edge_dict.values()]
+    if graph_info is not None:
+        for k,v in graph_info.items(): g[k] = v
     return g
 
 

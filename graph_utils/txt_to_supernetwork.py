@@ -44,7 +44,8 @@ def txt_to_supernetwork(filepath_net, filepath_act, name="SuperNetwork",
     # Construct supernetwork from *_net_times.txt files
     # and from *_activities.txt file
     edge_dict = txt_to_superedge_dict(filepath_net, alpha)
-    edge_activities_dict = txt_to_activities_edge_dict(filepath_act, shifting)
+    edge_activities_dict = txt_to_activities_edge_dict(filepath_act, 
+        read_metadata(filepath_net), shifting)
     edge_dict.update(edge_activities_dict)
     return edge_dict_to_igraph(edge_dict, name)
 
@@ -58,7 +59,6 @@ def txt_to_superedge_dict(filepath_net, alpha=1.0):
     metadata = read_metadata(filepath_net)
     num_nodes = metadata['num_nodes']
     num_steps = metadata['num_steps']
-
     header_passed = False
     edge_dict = {}
     with open(filepath_net) as f:
@@ -78,23 +78,20 @@ def txt_to_superedge_dict(filepath_net, alpha=1.0):
     return edge_dict
 
 
-def txt_to_activities_edge_dict(filepath_act, shifting=True):
-    # Add activity edges to edge_dict generated from txt_to_superedge_dict()
-    # filepath contains list of activities from *_activities.txt
+def txt_to_activities_edge_dict(filepath_act, metadata, shifting=True):
+    # generate dictionary of activity edges from file *_activities.txt
     # see networks/SmallGrid_activities.txt for example
     # activity weights are < 0 because equal to minus reward
     # if shifting is True, the activity weights are shifted by 
     # (end-start+1)*shift to make activity edges positive
-    metadata = read_metadata(filepath_act)
-    num_nodes = metadata['num_nodes']
-    home = metadata['home_location']
-    num_steps = metadata['num_steps']
-
     edge_dict = {}
-    lines, shift = read_activity_lines_and_return_shift(filepath_act)
+    home = read_metadata(filepath_act)['home_location']
+    num_steps = metadata['num_steps']
+    num_nodes = metadata['num_nodes']
+    activities, shift = snap_activities_to_time_grid_get_shift(filepath_act, metadata)
     if shifting is False: shift = 0.0
     # add normal activity edges
-    for edge, type_edge, reward, duration in lines:
+    for edge, (type_edge, reward, duration) in activities.items():
         edge_dict[edge] = {'weight': -reward + duration*shift, 'type': type_edge, 
                             'raw_weight': -reward}
     # add home activity edges
@@ -104,17 +101,21 @@ def txt_to_activities_edge_dict(filepath_act, shifting=True):
     return edge_dict
 
 
-def read_activity_lines_and_return_shift(filepath_act):
-    # filepath contains list of activities from *_activities.txt
-    # return list of lines splitted into elements
-    # and the shift to be applied to have positive weights
-    metadata = read_metadata(filepath_act)
+# deprecated
+def snap_activities_to_time_grid_get_shift(filepath_act, metadata):
+    # read a file *_activities.txt and metadata on the supernetwork
+    # returns list of processed activities
+    # activities[edge] = [type_edge, reward, duration]
+    # where edge = (start_node, end_node) in the supernetwork
+    # type_edge is the type of the activity and reward = -cost
+    # duration = number of time steps between end_node and start_node
     start_time = metadata['start_time']
+    end_time = metadata['end_time']
     num_steps = metadata['num_steps']
     num_nodes = metadata['num_nodes']
-
+    delta_t = float(end_time - start_time) / num_steps
     header_passed = False
-    lines = []
+    activities = {}
     shift = 0.0
     with open(filepath_act) as f:
         for line in f.readlines():
@@ -123,20 +124,82 @@ def read_activity_lines_and_return_shift(filepath_act):
                 if len(line) == 0: break
                 line[-1] = line[-1][:-1]
                 node = int(line[0])
-                start = int(line[1]) - start_time
-                end = int(line[2]) - start_time
-                assert 0 < start < end < num_steps
-                type_edge = int(line[3])
-                reward = float(line[4])
-                # note that we take start-1 since being on vertex v slice t
-                # means only starting the activity at v at slice t+1
-                duration = 1+end-start
-                if shift < reward/duration: shift = np.ceil(reward/duration)
-                edge = (node + (start-1)*num_nodes, node + end*num_nodes)
-                lines.append([edge, type_edge, reward, duration])
+                # snap start to the closest time slice
+                start = int(round((float(line[1]) - start_time) / delta_t))
+                # snap end to the closest time slice
+                end = int(round((float(line[2]) - start_time) / delta_t))
+                # check if the activity is within the time span of the supernetwork
+                if 0 < start <= end < num_steps:
+                    type_edge = int(line[3])
+                    reward = float(line[4])
+                    # note that we take start-1 since being on vertex v slice t
+                    # means only starting the activity at v at slice t+1
+                    duration = 1+end-start
+                    if shift < reward/duration: shift = np.ceil(reward/duration)
+                    edge = (node + (start-1)*num_nodes, node + end*num_nodes)
+                    activities[edge] = [type_edge, reward, duration]
             else:
                 if line[0] == '~': header_passed = True
-    return lines, shift
+    return activities, shift
+
+
+def txt_to_activities(filepath_act, metadata):
+    # read a file *_activities.txt and metadata on the supernetwork
+    # return list of possible activities in the same of format as
+    # snap_activities_to_time_grid_get_shift()
+    start_time = metadata['start_time']
+    end_time = metadata['end_time']
+    num_steps = metadata['num_steps']
+    num_nodes = metadata['num_nodes']
+    delta_t = float(end_time - start_time) / num_steps
+    header_passed = False
+    activities = {}
+    shift = 0.0
+    with open(filepath_act) as f:
+        for line in f.readlines():
+            if header_passed == True:
+                line = line.split()
+                if len(line) == 0: break
+                line[-1] = line[-1][:-1]
+                # get attributes of each line
+                node = int(line[0])
+                type_edge = int(line[1])
+                # reward per unit of time
+                reward = float(line[2]) * delta_t
+                deprecation = float(line[3])
+                # snap start and end times to the closest time slice
+                start = int(round((float(line[4]) - start_time) / delta_t))
+                start = max(start, 1)
+                end = int(round((float(line[5]) - start_time) / delta_t))
+                end = min(end, num_steps-1)
+                if start >= end: continue
+                # snap min and max times to the grid
+                min_time = int(round(float(line[6]) / delta_t))
+                max_time = int(round(float(line[7]) / delta_t))
+                if min_time > max_time or min_time >= num_steps: continue
+                # all possible combinations of start and end times
+                for s,t in all_times_combinations(start, end, min_time, max_time):
+                    # note that we take start-1 since being on vertex v slice t
+                    # means only starting the activity at v at slice t+1
+                    edge = (node + (s-1)*num_nodes, node + t*num_nodes)
+                    duration = 1+t-s
+                    total_reward = reward*(duration-1)
+                    activities[edge] = [type_edge, total_reward, duration]
+                    if shift < total_reward/duration: 
+                        shift = np.ceil(total_reward/duration)
+            else:
+                if line[0] == '~': header_passed = True
+    return activities, shift
+
+
+def all_times_combinations(start, end, min_time, max_time):
+    # compute all time combinations of activities of min_time, max_time
+    # available between start and end when all are integers
+    times = []
+    for i in range(start, end - min_time + 1):
+        for j in range(min_time, 1+ min(max_time , end-i)):
+            times.append((i, i+j))
+    return times
 
 
 def read_metadata(filepath):
@@ -159,5 +222,7 @@ def read_metadata(filepath):
                 metadata['num_types'] = int(line[17:])
             if line[:10] == '<END TIME>':
                 metadata['end_time'] = int(line[10:])
+            if line[:17] == '<NUMBER OF LINKS>': 
+                metadata['num_links'] = int(line[17:])
     return metadata
 

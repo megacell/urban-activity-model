@@ -18,7 +18,8 @@ def activity_engine(filepath_net, filepath_act, name="SuperNetwork", alpha=1.0):
     # construct super network
     g = txt_to_supernetwork(filepath_net, filepath_act, name, alpha)
     # read metadata
-    metadata = read_metadata(filepath_act)
+    metadata = read_metadata(filepath_net)
+    metadata.update(read_metadata(filepath_act))
     num_types = metadata['num_types']
     num_nodes = metadata['num_nodes']
     num_steps = metadata['num_steps']
@@ -60,10 +61,11 @@ def raw_to_activity(raw, metadata):
     # into trajectories on a time slice basis 
     # format {activity: [(start, end, nodes visited)]}
     start_time = metadata['start_time']
-    # end_time = metadata['end_time']
-    # num_steps = metadata['num_steps']
+    end_time = metadata['end_time']
+    num_steps = metadata['num_steps']
     num_nodes = metadata['num_nodes']
     num_types = metadata['num_types']
+    delta_t = float(end_time - start_time) / num_steps
     combinations = list(itertools.product([0, 1], repeat=num_types))
     out = {}
     for traj, a in zip(raw, combinations):
@@ -72,10 +74,10 @@ def raw_to_activity(raw, metadata):
             continue
         # start_time + v/num_nodes is the time slice associated to v
         # v%num_nodes is the location of vertex v
-        pairs = [(start_time + v/num_nodes, v%num_nodes) for v in traj]
+        pairs = [(start_time + delta_t * (v/num_nodes), v%num_nodes) for v in traj]
         # group by times
         starts = sorted(set(map(lambda x:x[0], pairs)))
-        ends = [t+1 for t in starts]
+        ends = [t + delta_t for t in starts]
         tmp = zip(starts, ends, [[y[1] for y in pairs if y[0]==x] for x in starts])
         out[a] = [e for e in tmp if len(e[2])>1]
     return out
