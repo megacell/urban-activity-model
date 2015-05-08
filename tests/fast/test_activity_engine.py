@@ -16,7 +16,7 @@ optimal_2 = [(6, 7, [0, 3, 4, 5]), (17, 18, [5, 2]), (20, 21, [2, 1, 0])]
 class TestActivityEngine(unittest.TestCase):
 
     def test_activity_engine_1(self):
-        # test on the small grid
+        # test on the small grid with both and work activities
         filepath_net = 'networks/SmallGrid_net_times.txt'
         filepath_act = 'networks/SmallGrid_activities.txt'
         activities, costs = activity_engine(filepath_net, filepath_act)
@@ -45,20 +45,30 @@ class TestActivityEngine(unittest.TestCase):
 
 
     def test_activity_engine_3(self):
+        # test
+        filepath_net = 'networks/SmallGrid_net_times.txt'
+        filepath_act = 'networks/SmallGrid_activities_reduced.txt'
+        activities, costs = activity_engine(filepath_net, filepath_act)
+        for i, (start, end, traj) in enumerate(activities[(0,)]):
+            self.assertTrue(start == optimal_0[i][0])
+            self.assertTrue(end == optimal_0[i][1])
+            self.assertTrue(traj == optimal_0[i][2] or traj == optimal_1[i][2])
+        for i, (start, end, traj) in enumerate(activities[(1,)]):
+            self.assertTrue(start == optimal_2[i][0])
+            self.assertTrue(end == optimal_2[i][1])
+            self.assertTrue(traj == optimal_2[i][2])
+        self.assertTrue(costs[(0,)] == -395.0)
+        self.assertTrue(costs[(1,)] == -554.0)
+
+
+
+    def test_activity_engine_4(self):
         # test a on the small grid with finer tim grid
         filepath_net = 'networks/SmallGrid_net_times_32_steps.txt'
-        filepath_act = 'networks/SmallGrid_activities.txt'
+        filepath_act = 'networks/SmallGrid_activities_reduced.txt'
         activities, costs = activity_engine(filepath_net, filepath_act)
-        # for i, (start, end, traj) in enumerate(activities[(0,)]):
-        #     self.assertTrue(start == optimal_0[i][0])
-        #     self.assertTrue(end == optimal_0[i][1])
-        #     self.assertTrue(traj == optimal_0[i][2] or traj == optimal_1[i][2])
-        # for i, (start, end, traj) in enumerate(activities[(1,)]):
-        #     self.assertTrue(start == optimal_2[i][0])
-        #     self.assertTrue(end == optimal_2[i][1])
-        #     self.assertTrue(traj == optimal_2[i][2])
-        # self.assertTrue(costs[(0,)] == -395.0)
-        # self.assertTrue(costs[(1,)] == -554.0)
+        print activities
+        print costs
 
 
 if __name__ == '__main__':

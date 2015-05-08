@@ -4,6 +4,8 @@ from pathfinding.pathfinding_extended import *
 
 __author__ = 'jeromethai'
 
+# this module testes pathfiding extended, which is an extension of
+# Dijkstra algorithm
 
 class TestPathfindingExtended(unittest.TestCase):
 

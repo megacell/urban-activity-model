@@ -107,6 +107,12 @@ def main():
     print "optimal activity paths"
     print trajs[(0,)], costs[(0,)]
     print trajs[(1,)], costs[(1,)]
+    print "optimal activity paths with finer time grid"
+    filepath_net = 'networks/SmallGrid_net_times_32_steps.txt'
+    filepath_act = 'networks/SmallGrid_activities_reduced.txt'
+    trajs, costs = activity_engine(filepath_net, filepath_act)
+    print trajs[(0,)], costs[(0,)]
+    print trajs[(1,)], costs[(1,)]
 
 
 if __name__ == '__main__':
